@@ -1,0 +1,59 @@
+--No1. PL/SQL プログラムの基本Structure
+1.1 BLOCK STRUCTURE
+ ・ANONYMOUS PLSQL BLOCK
+ ・STORED SUBPROGRAM
+ 
+ 특징
+ ・블록구조는 중첩이 가능하다.
+
+   ----------------------------------------------------------
+    DECLARE　--①
+    	선언부
+    	:타입,상수,변수,예외,커서,서브프로그램 등의 선언/정의
+    BEGIN　--②
+    	실행부(필수)
+    	:로직처리
+    EXCEPTION　--③
+    	예외처리
+    	
+    END;
+   ----------------------------------------------------------
+
+   ①DECLARE
+     ・미리 선언되지 않은 변수를 사용하는 것은 불가능
+     ・BEGIN과END사이의 실행부에서 사용될 변수는 반드시 사전에 선언되어야 한다.
+     ・DECLARE는 생략이 가능하다.
+     ・서브프로그램(FUNCTION/PROCEDURE)이 가장 뒤에 선언이 되어야 한다.
+   ②BEGIN
+     ・필수영역
+   ③EXCEPTION
+     ・생략가능
+     
+1.2 STATEMENT
+1.3 STORED SUBPROGRAM & ANONYMOUS PLSQL
+   ■STORED SUBPROGRAM
+     컴파일 되어 데이터베이스의 데이터 딕셔너리에 소스코드와 함께 바이트 코드 형태로 저장된다.
+     ・데이터 딕셔너리에 저장된다.
+     ・재사용이 가능
+     ・ANONYMOUS PLSQ의 호출불가
+     ・예제
+       CREATE OR REPLACE FUNCTION pracEx1(a_num NUMBER)
+       RETURN NUMBER
+       IS
+       BEGIN
+         RETURN a_num * a_num;
+       END;
+       /
+   ■ANONYMOUS PLSQL
+     즉시 실행되며, 데이터베이스의 데이터 딕셔너리에는 저장되지 않는다.
+     ・데이터 딕셔너리에 저장되지 않는다.
+     ・재사용이 불가능
+     ・STORED SUBPROGRAM의 호출가능
+     ・예제
+       DECLARE
+         v_num NUMBER;
+       BEGIN
+         v_num := pracEx1(10);
+         DBMS_OUTPUT.PUT_LINE(v_num);
+       END;
+       /
