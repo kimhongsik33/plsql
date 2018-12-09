@@ -1,0 +1,14 @@
+-- No2. PL/SQL データTYPE・変数・CONSTANT
+-- Chapter6.DATA TYPE
+-- No6_5  BOOLEAN値出力STORED FUNCTION
+-- DBMS_OUTPUT.PUT またはPUT_LINE　FUNCTIONの使用が不可能のため、CASE文及びIF文を利用する。
+
+CREATE OR REPLACE FUNCTION boolean_string(a_boolean BOOLEAN) RETURN VARCHAR2
+IS
+BEGIN
+	RETURN CASE WHEN a_boolean = TRUE THEN 'TRUE'
+			    WHEN a_boolean = FALSE THEN 'FALSE'
+			    WHEN a_boolean IS NULL THEN 'NULL'
+		   END;
+END;
+

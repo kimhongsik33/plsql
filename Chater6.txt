@@ -1,0 +1,109 @@
+--No2. PL/SQL データTYPE・変数・CONSTANT
+Chapter6.DATA TYPE
+　6-1.STRING DATA TYPE
+　■ORACLEのSTRING DATA TYPE
+　　・CHAR
+　　・NCHAR
+　　　→サイズの諸略が可能
+　　　→サイズを指定しない場合はDEFAULT１になる。
+　　・VARCHAR2
+　　・NVARCHAR2
+　　　→サイズの諸略が不可能
+　　
+　　===================================================
+　　EX)
+　　　DECLARE
+　　　　v_char_default		CHAR;			--SIZEが1
+　　　　v_char_size			CHAR(10);		--SIZEが10
+　　　　v_nchar_default		NCHAR;			--SIZEが1
+　　　　v_nchar_size			NCHAR(10);		--SIZEが10
+　　　　
+　　　　v_varchar_default		VARCHAR2;		--ERROR
+　　　　v_varchar_size		VARCHAR2(10);	--SIZEが10
+　　　　v_nvarchar_default	NVARCHAR2;		--ERROR
+　　　　v_nvarchar_size		NVARCHAR2(10);	--SIZEが10
+　　　BEGIN
+　　　　NULL;
+　　　END;
+　　===================================================
+　
+　■CHAR CHARACTER SET
+　　●データベースCharacterSet（CHARACTERSET）
+　　　・US7ASCⅡ
+　　　　→1CHARと1BYTEが同一
+　　●国家別CharacterSet（NCHAR_CHARACTERSET）
+　　　・KO16KSC5601
+　　　・K016MSWIN949
+　　　　→1CHARと1BYTEが不一致
+　　No6_2参照
+　　
+　
+　6-2.PL/SQL専用 DATA TYPE
+　　6-2-1．PL/SQL専用 数値DATA TYPE
+　　　PLS_INTEGER(＝BINARY_INTEGER)
+　　　
+　　　・SQLのデータタイプであるNUMBERは10陣数に適合なデータタイプで、ソフトウェア的に計算されるのでスピードが遅い。
+　　　・PLS_INTEGERタイプはCPUで支援する4バイトの整数データタイプで計算スピードが速い。
+　　　　→PL/SQLのサーブタイプ
+　　　　　：NATURAL,NATURALN、POSITIVE、POSITIVEN、SIGNTYPE、SIMPLE_INTEGER
+　　
+　　6-2-2．PL/SQL専用 BOOLEAN DATA TYPE
+　　　
+　　　・SQLデータタイプがなく、テーブルに保存できない。
+　　　・SQLの内部Functionには利用できない。
+　　　・SQL文に利用できない。
+　　　　ただし、BOOLEANタイプを利用するSTORED SUBPROGRAM　及びANONYMOUS PL/SQL　プログラムには利用できる。
+　　　・BOOLEANタイプ変数にはSELECT INTOまたはFETCH INTOを使用して値を保存できない。
+　　　・BOOLEANタイプはDBMS_OUTPUT.PUTまたはPUT_LINE関数を使用して値を出力できない。
+　　　　BOOLEAN値を出力するためにはCASE及びIF文を使用して出力しないといけない。
+　　　　　→NO6_3、No6_4を参照
+　
+　6-3.使用者定義サーブタイプ
+　　
+　　■SUBTYPE サーブタイプ名 IS ベースタイプ
+　　
+　　　EX)SUBTYPE 整数 IS PLS_INTEGER;
+　　　   SUBTYPE 名前 IS VARCHAR2(20 CHAR) NOT NULL;
+　　　   v_name 名前 := 'SCOTT';
+　　　   
+　　　   SUBTYPE 等級 IS PLS_INTEGER RANGE 1000..9999;
+
+
+   ①DECLARE
+     ・?? ???? ?? ??? ???? ?? ???
+     ・BEGIN?END??? ????? ??? ??? ??? ??? ????? ??.
+     ・DECLARE? ??? ????.
+     ・??????(FUNCTION/PROCEDURE)? ?? ?? ??? ??? ??.
+   ②BEGIN
+     ・????
+   ③EXCEPTION
+     ・????
+     
+1.2 STATEMENT
+1.3 STORED SUBPROGRAM & ANONYMOUS PLSQL
+   ■STORED SUBPROGRAM
+     ??? ?? ??????? ??? ????? ????? ?? ??? ?? ??? ????.
+     ・??? ????? ????.
+     ・???? ??
+     ・ANONYMOUS PLSQ? ????
+     ・??
+       CREATE OR REPLACE FUNCTION pracEx1(a_num NUMBER)
+       RETURN NUMBER
+       IS
+       BEGIN
+         RETURN a_num * a_num;
+       END;
+       /
+   ■ANONYMOUS PLSQL
+     ?? ????, ??????? ??? ?????? ???? ???.
+     ・??? ????? ???? ???.
+     ・???? ???
+     ・STORED SUBPROGRAM? ????
+     ・??
+       DECLARE
+         v_num NUMBER;
+       BEGIN
+         v_num := pracEx1(10);
+         DBMS_OUTPUT.PUT_LINE(v_num);
+       END;
+       /
