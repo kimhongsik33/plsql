@@ -1,0 +1,69 @@
+--No3. PL/SQL OPERATOR、OPERAND
+--基本的な内容は省略する。
+
+Chapter8.PL/SQL OPERATOR、OPERAND
+　8-1.Short-Circuit Evaluation
+　　
+　　Short-Circuit Evaluationとは？
+　　　評価減式でいろんな演算が連続で現れる場合、前の論理演算で全体の演算の結果がわかる場合、
+　　　後の演算をせずに演算を終了するルール。
+　　　
+　　　-----------------------------------------------
+　　　DECLARE
+　　　 x NUMBER := 1;
+　　　 y NUMBER := 2;
+　　　 z NUMBER := 0;
+　　　BEGIN
+　　　 IF x = 1 OR y/z = 0 THEN --①
+　　　  DBMS_OUTPUT.PUT_LINE('x = 0 OR y / z = 0');
+　　　 END IF;
+　　　 x := 2;
+　　　 IF x = 1 OR y/z = 0 THEN --②
+　　　  DBMS_OUTPUT.PUT_LINE('x = 0 OR y / z = 0');
+　　　 END IF;
+　　　END;
+　　　-----------------------------------------------
+　　　①→Short-Cursuit Evaluationにより、後ろのy/z=0は考慮せず、Trueと判断する。
+　　　②→Short-Cursuit Evaluationにより、前のx=1というロジックでFalseになり後ろは考慮せず、falseと判断する。
+　　　
+　8-2.CASE
+　　・Simple CASE Expression
+　　　：CASE [SELECTOR] WHEN [SELECTOR-VALUE]
+　　・Searched CASE Expression
+　　　：CASE WHEN [条件式]
+　　　
+　　
+　　①SIMPLE CASE Expression
+　　　<Basic Format>
+　　　CASE [SELECTOR]
+　　　  WHEN [SELECTOR-VALUE1] THEN [RESULT1]
+　　　  WHEN [SELECTOR-VALUE2] THEN [RESULT2]
+　　　  ･･･
+　　　  WHEN [SELECTOR-VALUEn] THEN [RESULTn]
+　　　  [ELSE else_resultValue]
+　　　END
+　　　
+　　　※No8_1.sqlを参照
+　　　
+　　②Searched CASE Expression
+　　　<Basic Format>
+　　　CASE
+　　　  WHEN [条件式1] THEN [RESULT1]
+　　　  WHEN [条件式2] THEN [RESULT2]
+　　　  ･･･
+　　　  WHEN [条件式n] THEN [RESULTn]
+　　　  [ELSE else_resultValue]
+　　　END
+　　　
+　　　※No8_2.sqlを参照
+　
+　8-3.PL/SQLでSQL FUNCTIONの使用
+　　・PL/SQLで使用できないSQL FUNCTION
+　　　→SUM、COUNT、DECODE
+　　　→DECODE関数をPLSQL　STRUNCTUREで使用するとErrorになる。
+　　　→ただし、PLSQL内の内部SQLでは使用できる。
+　　　→　　　　IMBEDED SQLでも使用できる
+　　　
+　　　※No8_3.sqlを参照→DECODEはPLSQLでサポートしていない
+　　　※No8_4.sqlを参照→DECODEをCASE式に変えて処理
+　　　※No8_5.sqlを参照→DECODE文はPLSQL内の内部SQLでは使用できる。

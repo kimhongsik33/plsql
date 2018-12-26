@@ -1,0 +1,70 @@
+--No2. PL/SQL データTYPE・変数・CONSTANT
+--基本的な内容は省略する。
+
+Chapter7.変数・CONSTANT・LITERAL
+　7-1.変数
+　
+　・NOT NULL変数に初期値を指定しない場合ERRORが発生する。
+　　→変数を初期値しない場合、初期値はNULLになる。
+　　→No7_1.sql参照
+　　
+　7-2.CONSTANT
+　　・CONSTANTは宣言と同時に値が定義される。
+　　・そのあとからは値の変更は不可能。
+　　
+　　＜CONSTANT名 CONSTANT DATATYPE := DEFAULT_VALUE＞
+　
+　7-3.LITERAL
+　　・ソースコードの固定値
+　　
+　　・TYPEが違うNULLはERRORが発生する。
+　　　→TYPEが違うNULLのPLSQLを実行すると、PARCINGレベルからERRORが発生して中断になる。
+　　　→No7_2.sql参照
+　　
+　　7-3-1.STRING LITERAL
+　　　・大・小文字を区別する。
+　　　・空白文字も重要な意味を持っている。
+　　　・STRING LITERALである'0'~'9'　と　NUMBER LITERALである0~9　は違う。
+　　　・長さが0であるSTRING LITERAL('')はNULLと取り扱う。
+　　　
+　　　■頭に文字Qを使用しないSTRING LITERAL
+　　　　------------------------------------------------------------
+　　　　DECLARE
+　　　　  v_SQL VARCHAR2(1000);
+　　　　BEGIN
+　　　　  v_SQL := 'SELECT EMPNO, ENAME
+　　　　            FROM EMP
+　　　　            WHERE ENAME IN(''SMITH'',''ALLEN'',''WARD'',''JONES'',''MARTIN'')';
+　　　　  DBMS_OUTPUT.PUT_LINE(v_SQL);
+　　　　END;
+　　　　------------------------------------------------------------
+　　　　
+　　　■頭に文字Qを使用するSTRING LITERAL
+　　　　------------------------------------------------------------
+　　　　DECLARE
+　　　　  v_SQL VARCHAR2(1000);
+　　　　BEGIN
+　　　　  v_SQL := Q'[SELECT EMPNO, ENAME
+　　　　              FROM EMP
+　　　　              WHERE ENAME IN('SMITH','ALLEN','WARD','JONES','MARTIN')]';
+　　　　  DBMS_OUTPUT.PUT_LINE(v_SQL);
+　　　　END;
+　　　　------------------------------------------------------------
+　　
+　　7-3-2.NUMBER LITERAL
+　　　浮動小数点型LITERALの注意POINT
+　　　　・浮動小数点型LITERALがメモリに保存できる値に変換されるとき、LETERALで指定した値と違う値になる可能性がある。
+　　　　・この理由はIEEE754標準にて定義する　浮動小数点Binary保存方式を使用しているため、
+　　　　　正確な10陣数小数数字を保存できない場合がある。
+　　　　　
+　　7-3-3.DATE LITERAL
+　　　・伝統的なDATE LITERALはOracleの型変換メッソドである「TO_DATE」を使用して
+　　　　STRING LITERALをDATE LITERALに変換する方式である。
+　　　・Oracle10.2からはANSI形式のDATE LITERALを利用できるようになっている。
+　　　　＜ANSI形式のDATE_LITERAL＞
+　　　　DATE LITERAL形式　　　：DATE'YYYY-MM-DD'
+　　　　TIMESTAMP LITERAL形式 ：TIMESTAMP'YYYY-MM-DD HH24:MI:SS'
+　　　　
+　　　　EX)
+　　　　DATE'2013-01-01'
+　　　　TIMESTAMP'2013-01-01 12:00:00
