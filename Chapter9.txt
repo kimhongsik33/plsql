@@ -1,0 +1,172 @@
+--No4. PL/SQL TRANSACTION・SAVEPOINT・ROLLBACK
+--基本的な内容は省略する。
+
+Chapter9.PL/SQL SQL実行
+　9-1.SELECT,INSERT,UPDATE
+　　
+　　9-1-1.SELECT　%ROWTYPE
+　　　：%ROWTYPEを利用すると、Columnごとに変数を指定しなくてもレコード全体のColumn のHandleが可能。
+　　　
+　　　　※No9_1.sqlを参照
+　　
+　　9-2-1.INSERT　%ROWTYPE
+　　　：INSERT文も%ROWTYPEを利用すると、レコード全体のColumnのHandleが可能。
+　　　　・INSERT文で値を設定しないColumnはNullが設定される。
+　　　　・テーブルレイアウトでColumnのDEFAULT値が設定されたとしてもNULLになる。
+　　　　
+　　　　※No9_2.sqlを参照
+　　　　
+　　9-3-1.UPDATE　%ROWTYPE
+　　　：INSERT文も%ROWTYPEを利用すると、レコード全体のColumnのHandleが可能。
+　　　・レコードの特定フィールドのみ値を設定した状態でUPDATEを行うと、値を設定していないフィールドの値はNULLになる。
+　　　・そのため、すべてのColumnをSELECTした後、UPDATEしようとするColumnのみ変更するのがよい。
+　　　・UPDATE文でレコード変数は「SET ROW」のみに使用できる。
+　　
+　　　　※No9_3.sqlを参照
+　　　
+　　9-4-1.MERGE　%ROWTYPE
+　　　：MERGE文も%ROWTYPEを利用すると、レコード全体のColumnのHandleが可能。
+　　　・MERGE文で%ROWTYPEを使用するのはMERGE文のINSERTのみである。
+　　　・MERGE文のUPDATE・DELETEにはレコードを使用することはできない。
+　　　
+　　　　※No9_4.sqlを参照
+　　　　
+　9-2.RETURNING INTO
+　　　
+　　　：RETURNING INTO文は「INSERT,UPDATE,DELETE」文によって処理されたColumnの値を出力変数に入れてReturnする機能である
+　　　---------------------------------------
+　　　＜基本フォーマット＞
+　　　RETURNING　表現式１、表現式２、・・・
+　　　INTO　　　変数１、変数２、・・・
+　　　---------------------------------------
+　　　・RETURNING文とINTO文の項目数は一致する。
+　　　・レコード変数を使用することができる。
+　　　
+　　　※No9_5.sqlを参照
+　
+　9-3.TRANSACTION
+　　
+　　①Atomicity
+　　　：Transactions are often composed of multiple statements. Atomicity guarantees that each transaction is treated as
+　　　　a single "unit", which either succeeds completely, or fails completely: if any of the statements constituting a trans
+　　　　action fails to complete, the entire transaction fails and the database is left unchanged. An atomic system must
+　　　　guarantee atomicity in each and every situation, including power failures, errors and crashes.
+　　②Consistency
+　　　：Consistency ensures that a transaction can only bring the database from one valid state to another, maintaining
+　　　　database invariants: any data written to the database must be valid according to all defined rules, including 
+　　　　constraints, cascades, triggers, and any combination thereof. This prevents database corruption by an illegal transaction, 
+　　　　but does not guarantee that a transaction is correct.
+　　③Isolation
+　　　：Transactions are often executed concurrently (e.g., reading and writing to multiple tables at the same time). 
+　　　Isolation ensures that concurrent execution of transactions leaves the database in the same state that 
+　　　would have been obtained if the transactions were executed sequentially. Isolation is the main goal of concurrency control;
+　　　depending on the method used, the effects of an incomplete transaction might not even be visible to other transactions.
+　　④Durability
+　　　：Durability guarantees that once a transaction has been committed, it will remain committed even in the case of a system failure 
+　　　(e.g., power outage or crash). This usually means that completed transactions (or their effects) are recorded in non-volatile memory.
+　　　
+　　
+　　・TransactionのAtomicityはCOMMIT,ROLLBACK,SAVEPOINTを使用して制御できる。
+　　＜SAVEPOINT＞
+　　　Transactionを特定視点をリカバリー視点に指定するTransaction制御文。
+　　＜SET TRANSACTION＞
+　　　Transactionを
+　　　・Read-Only及びRead-Writeモードに変更
+　　　・Isolation levelの設定
+　　　・Rollback Segmentの指定のような
+　　　　Transaction を設定する制御文
+　　　　
+　　9-3-1.暗黙的COMMIT
+　　　・ORACLEはDDLを実行する場合は名詞的なCOMMITがなくても自動COMMITができるようになっている。
+　　　・こういうのを暗黙的COMMITという。
+　　　
+　　　※No9_6.sqlを参照
+　　　-----------------------------------------------
+　　　BEGIN
+　　　  DELETE FROM emp WHERE empno = 9000;
+　　　  COMMIT;
+　　　  
+　　　  INSERT INTO emp (empno, ename, hiredate, sal) VALUES (9000, 'HONG', SYSDATE, 9000);--①
+　　　  UPDATE emp SET sal = sal + 100 WHERE empno = 9000;--②
+　　　  EXECUTE IMMEDIATE 'CREATE TABLE t(C1 NUMBER)';　--③
+　　　  ROLLBACK;
+　　　  
+　　　  DECLARE
+　　　    v_sal NUMBER;
+　　　  BEGIN
+　　　    SELECT sal INTO v_sal FROM emp WHERE empno = 9000;
+　　　  DBMS_OUTPUT.PUT_LINE('SAL='||v_sal);
+　　　  END;
+　　　END;
+　　　-----------------------------------------------
+　　　
+　　　①と②ではCOMMITされないが、
+　　　③にてDDLが実行されることにより、TRANSACTIONを暗黙的にCOMMITする。
+　　　そのあとROLLBACKが実行されるが、③で暗黙的なCOMMITが実行されてしまい、
+　　　①②はROLLBACKされない。
+　　　
+　　9-3-2.SAVEPOINT
+　　　
+　　　：TRANSACTIONの特定視点にチェックをしたあと、ある状況でTransaction全体ではなく、チェックした視点以降の変更だけROLLBACKが可能
+　　　
+　　　　　　　　　　　　　　ROLLBACK TO　　　　　　ROLLBACK TO
+　　　　　　　　　　　　　　SavePoint1　　　　　　 SavePoint2
+　　　----|-----------------------|----------------------|--------------------|---->
+　　　Transaction　　　　　　SavePoint1　　　　　　　SavePoint2　　　　　　エラー発生
+　　　スタート
+　　　
+　　　※No9_7.sqlを参照
+　　　
+　　　-------------------------------------------------------------------------
+　　　1  DECLARE
+　　　2    v_org_sal NUMBER := 5000;
+　　　3  BEGIN
+　　　4    DELETE FROM emp WHERE empno = 9000;
+　　　5    COMMIT;
+　　　6    
+　　　7    INSERT INTO emp (empno, ename, hiredate, sal) VALUES (9000, 'HONG', SYSDATE, v_org_sal);
+　　　8    SAVEPOINT p1;
+　　　9   
+　　　10   UPDATE emp SET sal = sal + 100 WHERE empno = 9000;
+　　　11   SAVEPOINT p2;
+　　　12   
+　　　13   BEGIN
+　　　14     INSERT INTO emp (empno, ename, hiredate, sal) VALUES (9000, 'SIK', SYSDATE, v_org_sal);
+　　　15   EXCEPTION WHEN OTHERS THEN
+　　　16     DBMS_OUTPUT.PUT_LINE('ERROR IS OCCURED : ' ||SQLERRM);
+　　　17     ROLLBACK TO p1;
+　　　18   END;
+　　　19   COMMIT;
+　　　20   
+　　　21   DECLARE
+　　　22     v_sal NUMBER;
+　　　23   BEGIN
+　　　24     SELECT sal INTO v_sal FROM emp WHERE empno = 9000;
+　　　25     DBMS_OUTPUT.PUT_LINE('SAL : '||v_sal);
+　　　26     IF v_org_sal <> v_sal THEN
+　　　27       DBMS_OUTPUT.PUT_LINE('salary is changed ');
+　　　28     ELSE
+　　　29       DBMS_OUTPUT.PUT_LINE('salary is not changed ');
+　　　30     END IF;
+　　　31   END;
+　　　32 END;
+　　　-------------------------------------------------------------------------
+　　　17行目のROLLBACK TO文は指定されたSAVEPOINT以降のTransactionを取消するとの意味であり、
+　　　8行目に戻ってその視点からリーランするという意味ではない。
+　　　SAVEPOINT p1以降のTransactionをキャンセルするだけで、
+　　　実行は21行目に進めてRollbackされなかった7行目のINSERT文をCOMMITする。
+　　　
+　　9-3-3.SET TRANSACTION
+　　　
+　　　：Transaction Attributeを設定する制御文
+　　　・DMLを不可能に設定するのが可能
+　　　--------------------------------------------------
+　　　1  BEGIN
+　　　2    DELETE FROM emp WHERE empno = 9000;
+　　　3    COMMIT;
+　　　4    SET TRANSACTION READ ONLY;
+　　　5    INSERT INTO emp(empno, ename, hiredate, sal) VALUES (9000, 'HONG', SYSDATE, 9000);
+　　　6  END;
+　　　--------------------------------------------------
+　　　→4行目でTransaction AttributeをDMLを不可能に設定
+　　　　したことで5行目のINSERT文は実行されない
