@@ -1,0 +1,59 @@
+--No7. PL/SQL レコード
+--基本的な内容は省略する。
+
+Chapter12.PL/SQL RECORD
+　　
+　12-1.Record使用
+　
+　　-----------------------------------------------
+　　TYPE ＜タイプ名＞ IS RECORD ＜フィールドリスト＞ 
+　　-----------------------------------------------
+　　※No12_1.sqlを参照
+　　
+　　※次の①②は同一のソースである。
+　　　①v_emp emp%ROWTYPE;
+　　　②TYPE emp_type IS RECORD(
+　　　    empno    NUMBER(4),
+　　　    ename    VARCHAR2(10),
+　　　    job      VARCHAR2(9),
+　　　    mgr      NUMBER(4),
+　　　    hiredate DATE,
+　　　    sal      NUMBER(7,2),
+　　　    comm     NUMBER(7,2),
+　　　    deptno   NUMBER(2)
+　　　  );
+　　　  v_emp emp_type;
+　
+　12-2.RECORDをSQLに使用する。
+　　
+　　・RECORDのフィールド名をSELECTのカラム名と一致しなくても問題ない。
+　　・RECORDのフィールドSIZEをSELECTのカラムSIZEと一致しなくても問題ない。
+　　・レコードを使用する一番簡単な方法は%ROWTYPEを使用すること。
+　　・SQL文にレコード変数を使用するとレコード変数以外のScala変数、CONSTANT,LITERALなどとは一緒に使用できない。
+　　・CollectionのCONSTRUCTORみたいに１つの文章でレコードすべてのフィールドに値を設定する方法は基本的にない。
+　　　そのため、CONSTRUCTORみたいなFUNCTIONを作成する方法しかない。
+　　
+　　※No12_2.sqlを参照
+　　※No12_3.sqlを参照
+　　※No12_4.sqlを参照
+　　※No12_5.sqlを参照
+　　　→CONSTRUCTORみたいなFUNCTIONを作成する例
+　　
+　12-3.RECORD変数に値をセット
+　
+　　レコードに値をセットする方法
+　　①演算子「:＝」を利用してRECORDをコピーする方法
+　　②SQL実行結果をレコード変数のフィールドに保存する方法
+　　
+　　※No12_4.sqlを参照
+　　　→フィールドが同一だとしてもTYPE名が異なるレコードには「:＝」演算が不可能
+　　　
+　12-4.RECORD変数の制約事項
+　　
+　　●RECORD変数を使用するところは次のところのみ。
+　　　・SELECT文のINTO
+　　　・UPDATE文のSET ROW
+　　　・INSERT文のVALUES
+　　　・RETURNING文のINTO
+　　
+　　●RECORDはWHERE,GROUP BY,ORDER BYでは使用できない。
