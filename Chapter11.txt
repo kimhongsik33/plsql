@@ -1,0 +1,149 @@
+--No6. PL/SQL COLLECTION
+--基本的な内容は省略する。
+
+Chapter11.PL/SQL COLLECTION
+　
+　・Scalar Type
+　・Composite Type
+　　－Collection：同一なデータタイプが繰り返されるデータを保存する構造。
+　　　EX)①　②　③　・・・
+　　－Record　　：お互い違うデータタイプのデータを集めた構造。
+　　　EX)①　(2)　<3>　・・・
+　　
+　11-1.Collection Type
+　　
+　　11-1-1.Asscociative Array
+　　　・Collection項目数を指定しない。
+　　　・Collection項目数には制限がない。
+　　　・Associative Array変数の初期化は必要としない。
+　　　・Associative Array変数はNullにならない。
+　　　
+　　　-------------------------------------------------------------------------------------
+　　　TYPE ＜タイプ名＞ IS TABLE OF ＜データタイプ＞ INDEX BY ＜インデックスデータタイプ＞
+　　　-------------------------------------------------------------------------------------
+　　　＜データタイプ＞　　　　　　：Associative Arrayに保存するデータタイプに該当する。
+　　　＜インデックスデータタイプ＞：保存された項目を識別するために利用されるIndexのType
+　　　
+　　　　※No11_1.sqlを参照
+　　　　※No11_2.sqlを参照
+　　　　　→BULT COLLECT INTOの例
+　　　　　→すべてのSelect結果をAssociative Array変数に保存する。
+　　　　※No11_3.sqlを参照
+　　　　　→FunctionのReturnとしてAssociative Arrayを使用する。
+　　　　　
+　　
+　　11-1-2.VARRAY
+　　　・VARRAY変数の宣言時にはARRAYのSIZEを指定しないといけない。
+　　　・このSIZEはARRAYが持っている最大のSIZEである。
+　　　・初期化されてないVARRAY変数はNULL。
+　　　・利用する前には必ず、初期化しないといけない。
+　　　
+　　　--------------------------------------------------
+　　　TYPE ＜タイプ名＞ IS VARRAY(N) OF ＜データタイプ＞
+　　　--------------------------------------------------
+　　　＜データタイプ＞
+　　　　→VARRAYに保存するデータタイプ
+　　　
+　　　※No11_4.sqlを参照
+　　　※No11_5.sqlを参照
+　　　　　→BULT COLLECT INTOの例
+　　　　　→すべてのSelect結果をVARRAY変数に保存する。
+　　
+　　
+　　11-1-3.NESTED TABLE
+　　　・順番とSIZEが固定されていないデータの集合を保存するのに適合なCOLLECTION。
+　　　・CollectionのIndexは１から順次的に増加する。
+　　　・初期化されていない変数はNULLで、VARRAYと同じく利用する前に必ず、初期化しないといけない。
+　　　
+　　　--------------------------------------------------
+　　　TYPE ＜タイプ名＞ IS TABLE OF ＜データタイプ＞
+　　　--------------------------------------------------
+　　　
+　　　※No11_6.sqlを参照
+　　　※No11_7.sqlを参照
+　　　　　→BULT COLLECT INTOの例
+
+　　　　※Associative Array、VARRAY、Nested Tableの比較
+　　　　						Associative Array	VARRAY		Nested Table
+　　　　---------------------------------------------------------------------
+　　　　Collection項目数		未指定				指定		未指定
+　　　　INDEX型					STRING Or INTEGER	INTEGER		INTEGER
+　　　　初期化されてない状態	EMPTY				NULL		NULL
+　　　　---------------------------------------------------------------------
+　　
+　　11-2.Collection Method
+　　　
+　　　PLSQL内Collection Methodが提供されている。
+　　　METHODは下記を参照
+　　　
+　　　・DELETE
+　　　　Ex）v_arr.DELETE
+　　　　　　v_arr.DELETE(3)
+　　　　　　v_arr.DELETE(3,2) 3,4番項目を削除
+　　　・TRIM：最後の項目を削除する。
+　　　　Ex）v_arr.TRIM()
+　　　　　　v_arr.TRIM(2) 最後の２つ項目を削除
+　　　・EXTEND
+　　　　Ex）v_arr.EXTEND()
+　　　　　　v_arr.EXTEND(2)
+　　　　　　v_arr.EXTEND(2,3) 3番項目のCopyを2つ追加
+　　　・EXISTS
+　　　・FIRST
+　　　・LAST
+　　　・COUNT
+　　　・LIMIT
+　　　・PRIOR
+　　　・NEXT
+　　　
+　　
+　　11-3.配列処理：BULK COLLECT・FORAL
+　　　＜BULK COLLECT＞
+　　　動作方式			SELECT文がサーバから実行されて抽出された結果ROWをいっきにCLIENTに回答して配列に保存する。
+　　　データ移動方向	TABLE　→　COLLECTION
+　　　使用命令			SELECT,FETCH
+　　　
+　　　＜FORALL＞
+　　　動作方式			DML処理する複数件のデータを配列に入れてサーバーにいっきに転送してサーバーから実行する。
+　　　データ移動方向	COLLECTION　→　TABLE
+　　　使用命令			INSERT,UPDATE,DELETE,MERGE
+　　
+　　　11-3-1.SELECT文にて配列処理（BULK COLLECT INTO）
+　　　　
+　　　　①LIMITキーワード未使用
+　　　　　・パータン１：SELECTする件数を制限しない。
+　　　　　・パータン２：WHERE文にROWNUMを使用してSELECTする最大件数を制限する。
+　　　　　・パータン３：SAMPLEキーワードを使用してSAMPLINGする比率を制限したらSAMPLINGするBLOCK数を制限する。
+　　　　　・パータン４：FETCH FIRST文を使用して最大件数を指定する。
+　　　　　
+　　　　　※No11_8.sqlを参照
+　　　　　　→LIMITキーワードなし。全体SELECT及びROWNUMを使用してSELECT件数を制限する。
+　　　　　※No11_9.sqlを参照
+　　　　　　→LIMITキーワードなし。SAMPLE及びFETCH FIRSTを使用してSELECT件数を制限する。
+　　　　　　
+　　　　②FETCH文にてLIMIYキーワード使用
+　　　　　→LOOPを使用して処理する。
+　　　　　→結果の最大件数がわからない場合、および結果件数が多くてメモリに負担がある場合使用する。
+　　　　　
+　　　　　※No11_10.sqlを参照
+　　　　　　→LIMITキーワードあり。SELECT件数制限
+　　　　　　
+　　　　　　＜No11_10.sqlにてLOOP終了条件＞
+　　　　　　１．CURSOR名%NOTFOUND
+　　　　　　２．COLLECTION変数.COUNT=0
+　　　　　　３．COLLECTION変数.COUNT < LIMIT
+　　　
+　　　11-3-2.DML文にて配列処理（FORALL）
+　　　
+　　　--------------------------------
+　　　FORALL ＜INDEX名＞ IS ＜範囲＞
+　　　--------------------------------
+　　　＜範囲＞
+　　　　→「..」
+　　　　　Ex)FORALL i IN var.FIRST .. var.LAST
+　　　　　     INSERT INTO(~~) VALUES(~~);
+　　　　→「INDICES OF」
+　　　　Ex)FORALL i IN INDICES OF var
+　　　　　     UPDATE ~~ SET ~~ WHERE ~~;
+　　　　→「VALUES OF」
+　　　　Ex)FORALL i IN VALUES OF var
+　　　　　     DELETE FROM ~~ WHERE ~~;
