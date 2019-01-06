@@ -1,0 +1,63 @@
+--No8. PL/SQL CURSOR
+--基本的な内容は省略する。
+
+Chapter13.PL/SQL CURSOR
+　　
+　13-1.IMPLICIT CURSOR & EXPLICIT CURSOR
+　　
+　　●IMPLICT CURSOR
+　　　・CURSOR宣言をしない
+　　　・CURSORの制御は不可
+　　　・使用可能なSQLは「SELECT,INSERT,UPDATE,DELETE,MERGE」
+　　　・「SQL%CURSOR属性」
+　　　・Ex)
+　　　　DECLARE
+　　　　  v_name emp.ename%TYPE
+　　　　BEGIN
+　　　　  SELECT ename INTO v_name FROM emp WHERE empno = 7788;
+　　　　END;
+　　　　↑↑↑↑
+　　　　SELECT文に特にCURSORの宣言はない。ただし、PLSQL実行時、PLSQLエンジンは
+　　　　暗黙的にCURSORを生成してOPEN,FETCH,CLOSEを実行してSELECT文を処理する。
+　　　　
+　　●EXPLICIT CURSOR
+　　　・DECLARE文にCURSOR宣言を持つ。
+　　　・CURSOR宣言をする。
+　　　・CURSORの制御は可能
+　　　・使用可能なSQLは「SELECT」
+　　　・「CURSOR名%CURSOR属性」
+　　　・OPEN,FETCH,CLOSE
+　　　・Ex)
+　　　　1  DECLARE
+　　　　2    v_name emp.ename%TYPE;
+　　　　3    
+　　　　4    --Explicit Cursor
+　　　　5    CURSOR ename_cursor IS
+　　　　6    SELECT ename FROM emp WHERE empno = 7788;
+　　　　7  BEGIN
+　　　　8    --Cursor Open
+　　　　9    OPEN ename_cursor;
+　　　　10    
+　　　　11   --Cursor Fetch
+　　　　12   FETCH ename_cursor
+　　　　13   INTO v_name;
+　　　　14   
+　　　　15   --Cursor Close
+　　　　16   CLOSE ename_cursor;
+　　　　17 END;
+　　　　
+　　　　↑↑↑↑
+　　　　5行目：CURSORを宣言する。
+　　　　　　　----------------------------------
+　　　　　　　CURSOR ＜カーソル名＞ IS SELECT文 
+　　　　　　　----------------------------------
+　　　　9行目：CURSORをOPENする。
+　　　　　　　　CURSORが複数回実行されるとき、SQLのPARSINGは最初のOPEN時に1回だけ実行され、
+　　　　　　　　その後からはCURSORをCLOSEして再OPENしても再PARSINGするではなく、
+　　　　　　　　既存のPARSING結果を再使用する。
+　　　　
+　　　　※No13_1.sqlを参照
+　　　　　→LOOP文を使用して複数件をFETCH
+　　　　※No13_2.sqlを参照
+　　　　　→BULK COLLECTを使用して複数件をFETCH
+　　　　
