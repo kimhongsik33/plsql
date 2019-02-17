@@ -1,0 +1,75 @@
+--No11. PL/SQL STORED　SUBPROGRAM
+
+Chapter16.PL/SQL STORED　SUBPROGRAM
+
+　16-1.STORED SUBPROGRAMを使用する理由
+　　
+　　・再使用性
+　　・維持保守性
+　　・Module化
+　　・標準化
+　　・性能
+　　　→STORED SUBPROGRAMで作成すると、すべての作業がサーバー内で行われより早い性能が得られる。
+　　　　STORED SUBPROGRAMを使用しないとクライアントプログラムに作成されDB呼び出される時に
+　　　　クライアントとサーバーの間に通信が行われ性能低下の原因になる。
+　
+　16-2.STORED SUBPROGRAMの種類
+　　・FUNCTION
+　　　結果値を返還するSUBPROGRAM
+　　・PROCEDURE
+　　　結果値を返還しないSUBPROGRAM
+　　・PACKAGE
+　　　TYPE,CONSTANT,VARIABLE,EXCEPTION,CURSOR,SUBPROGRAMを
+　　　集めてMODULE化したSTORED SUBPROGRAM
+　　・TRIGGER
+　　　特定イベント発生時データベースにより自動的に呼び出されるSUBPROGRAM
+　　・OBJECT TYPE
+　
+　16-3.STORED SUBPROGRAMのCOMPILEと実行方法
+　　
+　　・STORED FUNCTION
+　　　※No16_1.sqlを参照
+　　　　→FUNCTION作成とCOMPILE
+　　　
+　　・STORED PROCEDURE
+　　　※No16_2.sqlを参照
+　　　　→PROCEDURE作成とCOMPILE
+　
+　16-4.STORED SUBPROGRAM実行する
+　
+　　使用例
+　　・＜PACKAGE名＞.＜FUNCTION名＞
+　　・＜PACKAGE名＞.＜PROCEDURE名＞
+　　
+　　●STORED FUNCTIONを利用する方法
+　　　
+　　　①FUNCTIONが入っているSQLを実行する。
+　　　　
+　　　　※No16_3.sqlを参照
+　　　　
+　　　②PLSQLを使用する方法
+　　　　
+　　　　※No16_4.sqlを参照
+　　
+　　●STORED PROCEDUREを利用する方法
+　　　
+　　　①PLSQL文からPROCEDUREを呼出する方法
+　　　　-----------------------------------------------------------
+　　　　BEGIN
+　　　　  raise_salary(7788,100);
+　　　　END;
+　　　　/
+　　　　-----------------------------------------------------------
+　　　
+　　　②CALL文利用して呼出する方法
+　　　　-----------------------------------------------------------
+　　　　CALL raise_salary(7788, 100);
+　　　　-----------------------------------------------------------
+　　　　
+　　　③EXECUTE　及び　EXECを使用して呼出する方法
+　　　　-----------------------------------------------------------
+　　　　EXECUTE raise_salary(7788, 100)
+　　　　
+　　　　EXEC raise_salary(7788, 100)
+　　　　-----------------------------------------------------------
+　　　　※EXECはセミコロンがなくても問題ない。

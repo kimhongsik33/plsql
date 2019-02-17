@@ -1,0 +1,131 @@
+--No10. PL/SQL EXCEPTION
+
+Chapter15.PL/SQL EXCEPTION
+
+　15-1.EXCEPTION
+　　
+　　●標準EXCEPTION名
+　　　
+　　　①DUP_VAL_ON_INDEX
+　　　　UNIQUE　INDEXを持っているテーブルにすでに存在しているキーを持っているROWが重複INSERTされたり、
+　　　　既存キー値をすでに存在するほかのキー値と同じ値でUPDATEする場合発生するEXCEPTIONである。
+　　　　
+　　　　＜EXCEPTION未処理のケース＞
+　　　　→※No15_1.sqlを参照
+　　　　＜EXCEPTION処理のケース＞
+　　　　→※No15_2.sqlを参照
+　　　
+　　　②NO_DATA_FOUND
+　　　　SELECT文実行時に発生する。
+　　　　SELECT INTO文でINTOにCOLLECTIONではなく、SCALA変数を使用する場合、結果は数字としてRETURNされ
+　　　　EXCEPTIONが発生するが、COLLECTIONを利用するとEXCEPTIONが発生しない。
+　　　　
+　　　　＜EXCEPTION処理のケース＞
+　　　　→※No15_3.sqlを参照
+　　　　
+　　　③TOO_MANY_ROWS
+　　　　SELECT文及びSELECTのSUBQUERYで発生する。
+　　　　結果が1件より多い場合発生する。
+　　　　
+　　　　＜EXCEPTION処理のケース＞
+　　　　→※No15_4.sqlを参照
+　　　
+　　　④OTHERS
+　　　　発生するどんなEXCEPTIONでも処理できるEXCEPTIONである。
+　　　　SQLCODE：発生したOracle Error Code
+　　　　SQLERRM：発生したError Message
+　　　　→内部PackageのSTANDARDに定義されたFUNCTION
+　　　　
+　　　　＜EXCEPTION処理のケース＞
+　　　　→※No15_5.sqlを参照
+　　　　
+　　●使用者定義EXSCEPTION名
+　　　
+　　　①RAISE
+　　　　
+　　　　DECLARE BLOCKにてEXCEPTIONを宣言した後、
+　　　　BEGIN～END間のBLOCKでRAISE文を使用してEXCEPTIONを発生させる。
+　　　　
+　　　　＜使用フォーマット＞
+　　　　-----------------------------------------------------------
+　　　　DECLARE
+　　　　  ＜EXCEPTION名＞ EXCEPTION;
+　　　　  ・・・
+　　　　BEGIN
+　　　　  ・・・
+　　　　  RAISE ＜EXCEPTION名＞
+　　　　  ・・・
+　　　　END;
+　　　　-----------------------------------------------------------
+　　　　
+　　　　
+　　　②RAISE_APPLICATION_ERROR
+　　　　：内部PACKAGEのDMBS_STANDARDに定義されたPROCEDURE
+　　　　
+　　　　＜使用フォーマット＞
+　　　　-----------------------------------------------------------
+　　　　RAISE_APPLICATION_ERROR(ERROR NUMBER, ERROR MESSAGE);
+　　　　DBMS_STANDARD.RAISE_APPLICATION_ERROR(ERROR NUMBER, ERROR MESSAGE);
+　　　　-----------------------------------------------------------
+　　　　※ERROR NUMNERは「-20000～-20999」の定数を使用することができる。
+　　　　
+　　　　
+　　　
+　　●EXCEPTIONを特定Error番号と紐づく
+　　　
+　　　：使用者指定EXCEPTION名を特定ORACLE ERRORと紐づくためには
+　　　「PRAGMA EXCEPTION_INIT」を使用する。
+　　　
+　　　＜使用フォーマット＞
+　　　-----------------------------------------------------------
+　　　PRAGMA EXCEPTION_INIT(EXCEPTION名、ERROR番号)
+　　　-----------------------------------------------------------
+　　　
+　　　※No15_6.sqlを参照
+　　　
+　　　OracleError’ORA-20001’をEXCEPTION名USER_DEFINED_EXCEPTIONと連結
+　　　※No15_7.sqlを参照
+　　　
+　　
+　　●EXCEPTION　照会FUNCTION
+　　　
+　　　・SQLCODE　　　　　　　　　：内部PACKAGE「STANDARD」に定義
+　　　・SQLERRM　　　　　　　　　：内部PACKAGE「STANDARD」に定義
+　　　・FORMAT_ERROR_BACKTRACE　　：内部PACKAGE「DBMS_UTILITY」に定義
+　　　・FORMAT_ERROR_STACK　　　　：内部PACKAGE「DBMS_UTILITY」に定義
+　　　・FORMAT_CALL_STACK　　　　：内部PACKAGE「DBMS_UTILITY」に定義
+　　　
+　　　①FORMAT_ERROR_BACKTRACE
+　　　
+　　　　ERRORが発生したところから
+　　　　該当EXCEPTIONを処理するEXCEPTION処理機までのBACKTRACEを返還する。
+　　　　
+　　　　※No15_8.sqlを参照
+　　　　
+　　　②FORMAT_ERROR_STACK
+　　　
+　　　　現在のERROR STACKを返還する。
+　　　　SQLERRMと同じ機能だが、SQLERRMは最大512Byteまで出力するが、
+　　　　FORMAT_ERROR_STACKは最大2000ByteまでのMessageを出力することができる。
+　　　　
+　　　　※No15_9.sqlを参照
+　　　
+　　　③FORMAT_CALL_STACK
+　　　　
+　　　　-----------------------------------------------------------
+　　　　CREATE OR REPLACE PRECEDURE p2 IS
+　　　　BEGIN
+　　　　  DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_CALL_STACK);
+　　　　  RAISE_APPLICATION_ERROR(-20001, '使用者指定EXCEPTION');
+　　　　END;
+　　　　-----------------------------------------------------------
+　　　　
+　　　　-----------------------------------------------------------
+　　　　CREATE OR REPLACE PROCEDURE p1 IS
+　　　　BEGIN
+　　　　  p2;
+　　　　EXCEPTION WHEN OTHERS THEN
+　　　　  DBMS_OUTPUT.PUT_LINE(SQLERRM);
+　　　　  DBMS_OUTPUT.PUT_LINE(DBMS_UTILITY.FORMAT_CALL_STACK);
+　　　　END;
+　　　　-----------------------------------------------------------
