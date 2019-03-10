@@ -1,0 +1,40 @@
+--No12. PL/SQL STORED FUNCTION
+
+Chapter17.PL/SQL STORED FUNCTION
+
+　17-1.FUNCTIONの基本Structure
+　　
+　　-------------------------------------------------------------
+　　CREATE [OR REPLACE] FUNCTION <関数名> [(パラメータリスト)]
+　　RETURN
+　　IS  --ASも同じ機能
+　　  <宣言部>
+　　BEGIN
+　　  <実行部>
+　　  RETURN <返還値>
+　　EXCEPTION
+　　  <例外処理部>
+　　END;
+　　-------------------------------------------------------------
+　
+　
+　17-2.FUNCTIONの宣言部
+　　
+　　FUNCTIONの宣言部にはTYPE,CONSTANT,VARIABLE,EXCEPTION,CURSOR,SUBPROGRAMの定義が可能。
+　　ただし、SUBPROGRAMの定義は最後にならないとエラーになる。
+　　
+　　※No17_1.sqlを参照
+　　
+　17-3.FUNCTIONの返還部
+　　
+　　FUNCTIONは’単一値’のみ返還れ変数にあてる。
+　　※Python及びGO言語は複数の値を返還することが可能。
+　　
+　　※No17_2.sqlを参照
+　　　→COLLECTIONをRETURNするFUNCTION
+　　※No17_3.sqlを参照
+　　　→RECORDをRETURNするFUNCTION
+　　※No17_4.sqlを参照
+　　　→COLLECTION返還FUNCTIONに連続で２つのカッコを使用
+　
+　
