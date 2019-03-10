@@ -1,0 +1,105 @@
+--No14. PL/SQL PACKAGE
+
+Chapter19.PL/SQL PACKAGE
+
+　・PACKAGEはPLSQLの色んな機能をMODULE化して一つのプログラムレベルで提供することができる。
+　・PACKAGEが持っているOBJECT志向的な特性でMODULE化されている。それで、不要な情報は隠して、必要な情報のみ公開する機能もある。
+
+　19-1.PACKAGEの基本Structure
+　　PACKAGEは次の２つに分かれる。
+　　①PACKAGE SPECIFICATION
+　　　・SUBPROGRAMの定義を持ってはいけない。
+　　　・SUBPROGRAMは「PACKAGE BODY」のみ定義が可能。
+　　　・ENDはあるが、BEGINはない。
+　　　・項目の順番はない。
+　　　・PUBLIC項目が宣言される。
+　　　
+　　　------------------------------------------------------------
+　　　CREATE OR REPLACE PACKAGE <PACKAGE名>
+　　　IS  --ASも同じ機能
+　　　  PUBLIC TYPE宣言
+　　　  PUBLIC CONSTANT宣言
+　　　  PUBLIC VARIABLE宣言
+　　　  PUBLIC CURSOR宣言
+　　　  PUBLIC EXCEPTION宣言
+　　　  PUBLIC SUBPROGRAM宣言
+　　　END;
+　　　-------------------------------------------------------------
+　　　
+　　　※No19_1.sqlを参照
+　　　
+　　②PACKAGE BODY
+　　　・PACKAGE SPECIFICATIONで宣言のみし、実態を定義してないSUBPROGRAMとCURSORの実態を定義する。
+　　　・PACKAGEの外部に公開するのではなく内部のみ使用する目的を宣言・定義が可能。
+　　　・PACKAGE SPECIFICATIONは必須、PACKAGE BODYは任意である。
+　　　・<PACKAGE初期化>はPACKAGE初期化される時（PACKAGEがメモリにロードされINSTANCEが生成される時）、1回だけ実行される。
+　　　-------------------------------------------------------------
+　　　CREATE [OR REPLACE] BODY <PACKAGE名>
+　　　IS  --ASも同じ機能
+　　　  PRIVATE(専用) TYPE宣言
+　　　  PRIVATE(専用) CONSTANT宣言
+　　　  PRIVATE(専用) VARIABLE宣言
+　　　  PRIVATE(専用) CURSOR宣言
+　　　  PRIVATE(専用) EXCEPTION宣言
+　　　  PRIVATE(専用) SUBPROGRAM宣言
+　　　  
+　　　  PUBLIC CURSOR 定義
+　　　  PUBLIC SUBPROGRAM 定義
+　　　  
+　　　BEGIN
+　　　  <PACKAGE初期化>
+　　　END;
+　　　-------------------------------------------------------------
+　　
+　　※No19_2.sqlを参照
+　
+　19-2.PACKAGE VARIABLE
+　
+　　①PUBLIC PACKAGE VARIABLE
+　　　・変数宣位置                 ：PACAKGE SPECIFICATION
+　　　・PACKAGE外部PLSQLで参照     ：可能    ※<PACKAGE名>.<PACKAGE変数>で参照可能
+　　　・PACKAGE外部SQLで参照       ：不可能
+　　　・PACKAGE内部SUBPROGRAMで参照：可能
+　　　
+　　②PRIVATE PACKAGE VARIABLE
+　　　・変数宣位置                 ：PACKAGE BODY
+　　　・PACKAGE外部PLSQLで参照     ：不可能
+　　　・PACKAGE外部SQLで参照       ：不可能
+　　　・PACKAGE内部SUBPROGRAMで参照：可能
+　　　
+　　　
+　　※PACKAGE VARIABLEは初期化される時、生成しPACKAGEが削除される時一緒に削除される。
+　　　つまり、PACKAGE VARIABLEのLIFE CYCLEはPACKAGEのLIFE CYCLEと同じである。
+　　※PACKAGE変数宣言は次の２つがある。
+　　　・PACKAGE VARIABLE宣言時、すぐ初期値を付与する方法
+　　　・PACKAGE初期化部で初期値を付与する方法
+　　　
+　9-3.PACKAGE VARIABLEのSESSION依存性
+　
+　　------------------------------------------------------------------------------------------------------
+　　SQLPLUS(SESSION1)                               |   SQLPLUS(SESSION2)
+　　------------------------------------------------------------------------------------------------------
+　　%>sqlplus scott/tiger                           |   %>sqlplus scott/tiger
+　　------------------------------------------------------------------------------------------------------
+　　SCOTT>SELECT pkg_seq.get_nextval FROM dual;     |
+　　GET_NEXTVAL                                     |
+　　-----------                                     |
+　　          1                                     |
+　　                                                |
+　　SCOTT>SELECT pkg_seq.get_nextval FROM dual;     |
+　　GET_NEXTVAL                                     |
+　　-----------                                     |
+　　          2                                     |
+　　------------------------------------------------------------------------------------------------------
+　　                                                |  SCOTT> SELECT pkg_seq.get_nextval FROM dual;
+　　                                                |
+　　                                                |  GET_NEXTVAL
+　　                                                |  -----------
+　　                                                |            1
+　　------------------------------------------------------------------------------------------------------
+　　SCOTT> SELECT pkg_seq.get_nextval FROM dual     |
+　　                                                |
+　　GET_NEXTVAL                                     |
+　　-----------                                     |
+　　          3                                     |
+　　------------------------------------------------------------------------------------------------------

@@ -1,0 +1,26 @@
+--No13. PL/SQL STORED PROCEDURE
+
+Chapter18.PL/SQL STORED PROCEDURE
+
+　18-1.STORED PROCEDUREの基本Structure
+　　
+　　・Returnされる値なく特定処理のみを行うSUBPROGRAMである。
+　　・Batch Program及びOracle Schedulerなどのデータを処理するプログラムで使用される。
+　　-------------------------------------------------------------
+　　CREATE [OR REPLACE] PROCEDURE <プロシージャ名> [(パラメータリスト)]
+　　IS  --ASも同じ機能
+　　  <宣言部>
+　　BEGIN
+　　  <実行部>
+　　EXCEPTION
+　　  <例外処理部>	
+　　END;
+　　-------------------------------------------------------------
+　　
+　　※FUNCTIONとの違いは？
+　　　・RETURNされる値がPROCEDUREにはない。
+　　　・<実行部>の「RETURN 返還値」がプロシージャにはない。
+　　　
+　　※※No18_1.sqlを参照
+　
+　
