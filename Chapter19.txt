@@ -74,7 +74,7 @@ Chapter19.PL/SQL PACKAGE
 　　　・PACKAGE VARIABLE宣言時、すぐ初期値を付与する方法
 　　　・PACKAGE初期化部で初期値を付与する方法
 　　　
-　9-3.PACKAGE VARIABLEのSESSION依存性
+　19-3.PACKAGE VARIABLEのSESSION依存性
 　
 　　------------------------------------------------------------------------------------------------------
 　　SQLPLUS(SESSION1)                               |   SQLPLUS(SESSION2)
@@ -103,3 +103,46 @@ Chapter19.PL/SQL PACKAGE
 　　-----------                                     |
 　　          3                                     |
 　　------------------------------------------------------------------------------------------------------
+　　
+　19-4.PACKAGE SUBPROGRAM
+　
+　　区分内容						|PUBLIC SUBPROGRAM		|専用SUBPROGRAM
+　　------------------------------------------------------------------------------
+　　宣言位置						|PACKAGE SPECIFICATION	|PACKAGE BODY
+　　PACKAGE外部PLSQLにて参照		|可能					|不可能
+　　PACKAGE外部SQLにて参照			|PROCEDURE：不可能		|不可能
+　　								|FUNCTION：可能			|
+　　PACKAGE内部SUBPROGRAMにて参照	|可能					|可能
+　　主使用者						|外部プログラム			|PUBLIC Or SUBPROGRAM
+　　------------------------------------------------------------------------------
+　　
+　19-5.PACKAGE CURSOR
+　
+　　一般的にSPECIFICATIONにCURSORを宣言してBODYに実CURSORを定義する。
+　　CURSORの宣言と定義を分けてCURSORのSPECIFICATIONの変更なく、CURSOR定義を変更できる長所がる。
+　　
+　　＜PACKAGE CURSOR SPECIFICATION＞
+　　---------------------------------------------------------------------------
+　　CREATE OR REPLACE PACKAGE pkg_emp
+　　IS
+　　  CURSOR c_emp_cur  RETURN emp%ROWTYPE ;
+　　END;
+　　---------------------------------------------------------------------------
+
+　　＜PACKAGE CURSOR BODY＞
+　　---------------------------------------------------------------------------
+　　CREATE OR REPLACE PACKAGE BODY pkg_emp
+　　IS
+　　　CURSOR c_emp_cur  RETURN emp%ROWTYPE IS
+　　　　SELECT *
+　　　　FROM emp
+　　　ORDER BY ename;
+　　END;
+　　---------------------------------------------------------------------------
+
+　　・RETURNタイプで指定できる返還形は
+　　　→＜テーブル＞%ROWTYPE, ＜VIEW＞%ROWTYPE, ＜CURSOR＞%ROWTYPE, ＜CURSOR VARIABLE＞%ROWTYPE
+　　　→＜RECORD VARIABLE＞%TYPE;
+　　　→＜RECORD TYPE＞
+
+
