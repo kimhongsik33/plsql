@@ -1,0 +1,119 @@
+﻿--Optimizer_ExplainPlan
+
+옵티마이저를 이용한 SQL 튜닝
+
+(1) 인덱스 정보를 이용하게 하려면
+- Optimizer가 실행계획(Execution Plan)을 결정하는 중요한 요소로 테이블에 대한 정보가 큰 비중을 차지한다.
+  특히 Index 정보는 아주 중요한 역할을 하므로, 항상 현재의 Index 정보를 파악하고 있어야 한다.
+
+---------------------------------------------------------------
+SQL> SELECT DISTINCT B.CLASS, COUNT(B.CLASS)
+2    FROM COL A, COM B
+3    WHERE A.YEAR = B.YEAR
+4        AND A.HOUSE = B.HOUSE
+5        AND A.SERIAL_NO = B.SERIAL_NO
+6        AND A.AMT >= 100
+7        AND B.DATE < '950501'
+8        AND B.CLASS IN ('C', 'Y', 'I', 'P')
+9    GROUP BY B.CLASS ;
+---------------------------------------------------------------
+위의 SQL문은 테이블 COM의 컬럼 DATE가 950501 보다 적고 컬럼 CLASS가 
+'C', 'Y', 'I', 'P' 인 것 중 테이블 COL과 조인하여 각각의 컬럼 CLASS에 대하여 건수를 구하는 SQL 문이다.
+
+
+
+INDEX 정보
+테이블명 |인덱스명 |컬럼 구성
+COL A    |COL_PK1  |YEAR + HOUSE + SERIAL_NO + HSNO
+COM B    |COM_IX   |YEAR + HOUSE + SERIAL_NO
+COM B    |COM_IDX1 |CLASS + DATE
+
+실행계획
+ROWS        EXECUTION PLAN
+_______      _________________________________________
+0            SELECT STATEMENT
+  1564                SORT(GROUP BY)
+  1564                    NESTED LOOP
+  6361                        TABLE ACCESS (FULL) OF 'COM'
+  2437                        TABLE ACCESS (BY ROWID) OF 'COL'
+  4437                            INDEX (RANGE SCAN) OF 'COL_PK1'(UNIQUE)
+
+* COM 테이블에서 FULL SCAN이 발생했다. 무엇이 문제일까?
+
+- SQL문을 보면 GROUP BY 를 사용했기 때문에 DISTINCT는 무의미하다.
+- 물론 Execution Plan을 보아도 DISTINCT에 대해서 별도의 실행계획은 생성되지 않았음.
+- DISTINCT를 제거한다 해도 실행계획과 실행시간에 영향을 미치지 않음.
+- Optimizer Mode 가 ALL_ROWS인 상태에서 Optimizer는 COM 테이블에 CLASS+DATE로 구성된 인덱스가 있음에도 불구하고 전체 테이블 스캔을 하는 것이 더 효율적이라고 판단했기 때문.
+- Optimizer는 우리가 생각할 때 아니다 싶은 방향으로도 실행계획을 생성하기도 함.
+- 그러나, COM 테이블의 인덱스 COM_IDX1(CLASS+DAT)를 먼저 ACCESS하고 난 후에 COL테이블을 ACCESS하면 COM테이블을 FTS(Full Table Scan)하는 것보다 Access하는 횟수를 줄일 수 있을 것이다.
+
+
+* 해결 방법
+- SQL DISTINCT 제거
+- Optimizer Mode를 FIRST_ROWS인 상태 또는 RULE로 변경하면 Optimizer는 COM테이블을 FTS(Full Table Scan)하지 않고 Index COM_IDX1을 제일 먼저 Access하게 될 것이다.
+
+
+EXECUTION PLAN
+________________________________________________
+0             SELECT STATEMENT
+1    0           SORT(GROUP BY)
+2    1               NESTED LOOP
+3    2                    TABLE ACCESS (BY ROWID) OF 'COM'
+4    3                      INDEX (RANGE SCAN) OF 'COM_IDX1'(NON-UNIQUE)
+5    2                    TABLE ACCESS (BY ROWID) OF 'COL'
+6    5                      INDEX (RANGE SCAN) OF 'COL_PK1'(UNIQUE)
+
+
+
+Optimizer Mode를 FIRST_ROWS 또는 RULE로 변경하니, 실행계획이 변경되었다. ; COM 테이블이 COM_IDX1 인덱스를 사용한다.
+
+
+(2) CHOOSE Mode 와 CBO
+SQL 문에 포함된 테이블 중 어느 하나라도 이미 분석된 상태(ANALYZE)라면, 
+그 SQL문은 기본적으로 비용기반 최적화에 맞춰진다.
+
+- Ex)SQL
+----------------------------------------------------------
+SELECT ROUND(NVL(SUM(C.REQR_QTY * Z.MIN_COMP_QTY *
+    ((100-Y.WASTE_RATE)/100*Y.KCAL)/TO_NUMBER(B.STD_NUM))/100,0),0)
+FROM FZJ222T A, FZJ220T B, FZJ221T C, FZJ204T_V1 X, FZJ311T Y, FZB007T Z
+WHERE (A.RECIPE_GROUP = B.RECIPE_GROUP) AND
+    (A.IN_RECIPE_CD = B.RECIPE_CD) AND
+    (B.RECIPE_GROUP = C.RECIPE_GROUP) AND
+    (B.RECIPE_CD = C.RECIPE_CD) AND
+    (C.RECIPE_GROUP = X.RECIPE_GROUP) AND
+    (C.RECIPE_ITEM_CD = X.RECIPE_ITEM_CD) AND
+    (B.FOOD_AREA = X.AREA_CD) AND
+    (X.CODE_TYPE = DECODE(NVL(C.CODE_TYPE,'0'),'0',B.CODE_TYPE,C.CODE_TYPE)) AND
+    (X.RECIPE_ITEM_CD = Y.RECIPE_ITEM_CD) AND
+    (X.ITEM_CD = Z.ITEM_CD) AND
+    (A.RECIPE_GROUP = '1') AND
+    (A.RECIPE_CD = '1')
+----------------------------------------------------------
+
+FZJ222T A 테이블의 RECIPE_GROUP 이 1이고 
+RECIPE_CE 가 1인 데이터를 다른 여러 테이블과 JOIN 시킨 SQL입니다. 
+Optimizer Mode 는 CHOOSE 상태로 가정합니다.
+
+- Index
+FZJ222T 테이블의 인덱스 입니다. 나머지 테이블도 위와 같은 방식으로 인덱스가 구성되어 있습니다.
+
+
+- 실행 계획
+위 실행계획을 보면 Optimizer Mode는 CHOOSE 라는 것을 알 수 있고 CBO(COST BASED OPTIMIZER)으로 실행된 것을 알 수 있다.
+(COST=8 CARD=1 BYTES=140 등 정보)
+CHOOSE Mode에서 CBO 방식으로 실행계획이 작성된 것은 해당 테이블 중 ANALYZE 된 테이블이 존재한다는 것.
+
+
+- 문제점은?
+실행계획을 살펴보면 가장 먼저 Access 하는 테이블은 빨간색 부분인 FZJ221T 테이블이다. 
+Index는 FZJ221T_IDX1 이다.
+위에 SQL을 다시 살펴보면 WHERE 조건의 빨간색 부분을 기준이 되어 JOIN이 일어난다. 
+그러므로 FZJ222T_IDX2 인덱스로 인덱싱한 FZJ222T 테이블이 먼저 Access 되어야 한다.
+Optimizer가 COST 비용이 제일 적은 FZJ221T 테이블을 먼저 Access 하는 실행계획을 세움으로써 전체 시간이 늘어나게 되었다.
+
+
+- 해결 방법
+앞에서 언급한대로 CHOOSE 에서 CBO 방식이 선택된 것은 SQL 에 있는 테이블 중 ANALYZE 된 테이블이 존재하기 때문입니다. 
+DICTIONARY 정보를 참조하면 ANALYZE 된 테이블 정보를 확인할 수 있습니다.
+따라서 실행 계획을 CBO(Cost Based Optimizer) 가 아닌 RBO(Rule Based Optimizer) 로 실행되도록 변경해야 합니다.

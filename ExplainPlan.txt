@@ -1,0 +1,115 @@
+﻿--ExplainPlan
+
+explain plan 이란 ?  ==> SQL 문의 실행계획과 상태값을 제공하는 명령어 이다 
+
+▣ optimizer mode 결정 방법
+     1) session level    ==> alter session set optimize_mode=rule ;
+     2) statement level  ==> hint 필요,  select /*+ choose */ ~~~~~~ ;
+     3) DB level           ==> default optimizer mode = ALL_ROWS
+
+1. SQL 문을 사용하면서 사용한 DB 구조의 상태 값
+           - 사용된 데이터 버퍼 캐시 블록 수
+           - 데이터 파일로부터 읽은 블록 수
+           - 네크워크를 통해 전송된 데이터의 바이트 수
+           - Sorting 작업 발생시 사용된 메모리 블럭수
+           - 처리된 데이터 량
+
+2. explain plan 명령어 사용 구문
+SQL> explain plan set statement_id = 'kso_001'
+         for select * from emp where deptno = 10 ;
+
+3. 2번단계에서 수행한 SQL 문장에 대한 실행계획에 대한 조회
+<<info_plan.sql>>
+set linesize 132
+col "OPERATION" for a55
+col options for a15
+col "OBJECT" for a25
+select     id, lpad(' ', 2*level) || operation || decode(id,0,' cost = ' || position,id) 
+             "OPERATION", options, object_name "OBJECT"
+from plan_table
+where statement_id = '&stmt_id'
+connect by prior id = parent_id
+start with id = 0
+order by id  ;
+
+====================================================================================
+
+4. SQL 문의 실행 계획을 plan_table 이 아닌 공유 풀 영역으로부터 직접 참조할수 있는 자료사전 :
+   ===> V$SQL_PLAN
+   4-1. v$sqlarea 자료사전에서 hash_value 값과 address 값을 구한다음
+      V$SQL_PLAN 자료사전의 입력값으로 사용 한다
+
+<< info_hash_addr.sql>>
+     set linesize 132
+     col sql_text for a55
+     rem  SQL 문의 실행 계획을 공유 풀 영역으로부터 직접 참조하기 위하여
+     rem   hash_value 와 address 를 구한다
+     rem   hash_value = SQL 문이 파싱되어 라이브러리 캐시 영역에 로딩될때
+     rem    해당 실행계획을 구분하는 값
+     rem    address = 메모리상의 주소 값
+     rem    hash_value 와 address 값을 가지고 info_sql_plan.sql 에 입력값으로 준다.
+
+     select sql_text, hash_value, address
+     from v$sqlarea
+     where sql_text like upper('%&tb_nm')  ; 
+
+4-2. V$SQL_PLAN 자료 사전에서 실행계획을 확인 한다
+
+    << info_sql_plan.sql >>
+          select id, lpad(' ',depth) || operation, options, object_name, optimizer, cost
+          from v$sql_plan
+          where hash_value = &1
+               and address = '&2'
+          start with id = 0
+          connect by (prior id = parent_id
+               and prior hash_value = hash_value
+               and prior child_number = child_number)
+          order sibling by id, position ;
+
+<< 수행 예 >>
+SQL> @info_sql_plan
+Enter value for 1: 540049802
+old   3: where hash_value = &1
+new   3: where hash_value = 540049802
+Enter value for 2: 000000008730AAD0
+old   4:   and address = '&2'
+new   4:   and address = '000000008730AAD0'
+
+4-3. V$SQL_PLAN 의 기타 컬럼에 대한 설명
+        - address          --> 커서의 핸들주소(v$sql, v$sqlarea 의 주소값을 참조하여 실행)
+        - hash_value      --> 라이브러리 캐시 영역에 작성된 실행계획을 구분하는 값
+        - child_number   --> 해당 실행계획과 관련된 번호
+        - cpu_cost         --> SQL 문이 실행되면서 사용한 CPU 비용
+        - io_cost            --> SQL 문이 실행되면서 사용된 비용
+        - temp_space     --> 해시조인이 발생하면서 분류작업을 하기 위해 사용한 공간
+
+=========================================================================================
+5. SQL 문의 실행 계획에 대한 결과 분석 (Statistics)
+
+Statistics --> 단위 : blocks
+----------------------------------------------------------
+       500  recursive calls      --> system tablespace의 dictionary 정보를 얻기위한 I/O,
+                                              과도한 recursive call 은 성능 저하의 원인이 된다.
+          0  db block gets       --> DML문 실행시 변경전 데이터를 저장하기위한 메모리 
+                                              (rollback data)
+          4  consistent gets     --> 변경후 데이터가 저장되는 메모리 
+                                              SQL문 실행시 디스크상에 있는 테이블 및 인덱스를  
+                                              저장하기위한 메모리 공간﻿
+        100  physical reads      --> disk(data file)로부터 읽혀져 메모리에 loading 된 블럭수
+          0  redo size
+        928  bytes sent via SQL*Net to client
+        523  bytes received via SQL*Net from client
+          2  SQL*Net roundtrips to/from client
+          0  sorts (memory)       --> 메모리상에서 sorting  작업 수행 (PGA 공간)
+          0  sorts (disk)            --> 메모리가 부족할경우에는 temp tablespace를 사용하여  
+                                               소트 작업 수행, 불필요한 I/O 발생하며,
+                                               성능저하의 원인이 된다
+          9  rows processed
+          
+- 데이터버퍼 캐시 관련 항목 ==> db block gets / consistent gets / physical reads
+- 메모리 상태 정상 판단 ==>  ( db block gets + consistent gets ) > physical reads
+                             메모리 블럭 > 디스크 블럭
+- 메모리 상태 부족 판단 ==> ( db block gets + consistent gets ) < physical reads
+                             메모리 블럭 < 디스크 블럭 --> 충분한(적절한) 메모리 공간이 
+                             확보되지 못한 상태 임 
+▶ 사용자가 생성한 테이블에 데이터를 입력하면 입력한 순서가 데이터가 저장되는 순서 이다.
